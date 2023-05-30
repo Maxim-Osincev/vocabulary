@@ -1,47 +1,55 @@
 <template>
   <div class="row absolute-full">
     <div class="folders_list q-gutter-sm relative-position">
-      <q-list v-if="folders && folders.length" class="rounded-borders" dense>
-        <q-item
-          v-for="folder in folders"
-          :key="folder.id"
-          clickable
-          v-ripple
-          :active="selectedFolder === folder.folder_name"
-          @click="getFolderWords(folder)"
-        >
-          <q-menu
-            touch-position
-            context-menu
+      <div v-if="loadingFoldersList" class="text-center q-pa-md">
+        <q-spinner-gears
+          color="primary"
+          size="2em"
+        />
+      </div>
+      <div v-else>
+        <q-list v-if="folders && folders.length" class="rounded-borders" dense>
+          <q-item
+            v-for="folder in folders"
+            :key="folder.id"
+            clickable
+            v-ripple
+            :active="selectedFolder === folder.folder_name"
+            @click="getFolderWords(folder)"
           >
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup>
-                <q-item-section>Переименовать</q-item-section>
-              </q-item>
-              <q-separator/>
-              <q-item clickable v-close-popup>
-                <q-item-section>Копировать</q-item-section>
-              </q-item>
-              <q-separator/>
-              <q-item clickable v-close-popup @click="confirmDeleting(folder)">
-                <q-item-section>Удалить</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-          <q-item-section>{{ folder.folder_name }}</q-item-section>
-        </q-item>
-      </q-list>
-      <div v-else class="q-pa-sm text-center">Список папок пуст</div>
-      <q-menu
-        touch-position
-        context-menu
-      >
-        <q-list dense style="min-width: 100px">
-          <q-item clickable v-close-popup>
-            <q-item-section @click="showEditingFolders = !showEditingFolders">Создать</q-item-section>
+            <q-menu
+              touch-position
+              context-menu
+            >
+              <q-list dense style="min-width: 100px">
+                <q-item clickable v-close-popup>
+                  <q-item-section @click="editingNameFolder(folder)">Переименовать</q-item-section>
+                </q-item>
+                <q-separator/>
+                <q-item clickable v-close-popup>
+                  <q-item-section>Копировать</q-item-section>
+                </q-item>
+                <q-separator/>
+                <q-item clickable v-close-popup @click="confirmDeleting(folder)">
+                  <q-item-section>Удалить</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+            <q-item-section>{{ folder.folder_name }}</q-item-section>
           </q-item>
         </q-list>
-      </q-menu>
+        <div v-else class="q-pa-sm text-center">Список папок пуст</div>
+        <q-menu
+          touch-position
+          context-menu
+        >
+          <q-list dense style="min-width: 100px">
+            <q-item clickable v-close-popup>
+              <q-item-section @click="showEditingFolders = !showEditingFolders">Создать</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </div>
     </div>
     <div class="col relative-position">
       <q-table
@@ -80,6 +88,22 @@
       <q-card-actions align="right">
         <q-btn flat label="Отменить" v-close-popup />
         <q-btn flat label="Сохранить" color="primary" @click="createNewFolder" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog v-model="showEditingNameFolders">
+    <q-card class="full-width" style="max-width: 500px;">
+      <q-card-section>
+        <div class="text-h6">Переименовать</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        <q-input v-model="folderName" label="Название папки" />
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Отменить" v-close-popup />
+        <q-btn flat label="Сохранить" color="primary" @click="renameFolder" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -125,9 +149,13 @@ interface Word {
 
 const selectedFolder = ref<string>('');
 
+const loadingFoldersList = ref<boolean>(false);
+
 const folders = ref<Folder[]>([]);
 const getAllFolders = async () => {
+  loadingFoldersList.value = true;
   folders.value = await axios.get('http://localhost:8000/folders').then(res => res.data);
+  loadingFoldersList.value = false;
 }
 
 const wordsList = ref<Word[]>([]);
@@ -168,11 +196,30 @@ const confirmDeleting = (folder: Folder) => {
 
 const deleteFolderById = async () => {
   const { id } = currentFolderToDelete.value as Folder;
-  currentFolderToDelete.value = {};
   const data = await axios.delete('http://localhost:8000/folders', { params: { folderId: id } }).then(res => res.data);
   if (data) {
     await getAllFolders();
     wordsList.value = [];
+    currentFolderToDelete.value = {};
+  }
+}
+
+const showEditingNameFolders = ref<boolean>(false);
+const currentFolderToRename = ref<Folder | object>();
+const editingNameFolder = (folder: Folder) => {
+  const { folder_name } = folder;
+  currentFolderToRename.value = folder;
+  showEditingNameFolders.value = !showEditingNameFolders.value;
+  folderName.value = folder_name;
+}
+
+const renameFolder = async () => {
+  const { id } = currentFolderToRename.value as Folder;
+  const data = await axios.put('http://localhost:8000/folders', { folderId: id, folderName: folderName.value }).then(res => res.data);
+  if (data) {
+    await getAllFolders();
+    currentFolderToRename.value = {};
+    folderName.value = '';
   }
 }
 

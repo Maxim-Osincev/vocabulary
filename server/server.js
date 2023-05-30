@@ -11,6 +11,7 @@ const foldersActions = require('./foldersWords/foldersWordsActions')
 app.get('/folders', foldersActions.getAllFolders)
 app.post('/folders', foldersActions.createNewFolder)
 app.delete('/folders', foldersActions.deleteFolderById)
+app.put('/folders', foldersActions.renameFolderById)
 
 // app.get('/words', wordsActions.getAllWords)
 // app.post('/words', wordsActions.addWord)

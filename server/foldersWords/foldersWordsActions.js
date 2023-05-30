@@ -28,7 +28,6 @@ const createNewFolder = (req, res) => {
 const deleteFolderById = (req, res) => {
   const { folderId } = req.query;
   wordsActions.deleteAllWordsInFolder(req, res);
-
   sqlPool.pool.query(
     `DELETE FROM words_folders WHERE id = ${folderId}`,
     function(err, results, fields) {
@@ -37,44 +36,23 @@ const deleteFolderById = (req, res) => {
       }
     }
   );
+}
 
-  // sqlPool.pool.query(
-  //   `DELETE FROM words_folders WHERE id = ${folderId}`,
-  //   function(err, results, fields) {
-  //     // Если в папке были слова
-  //     if (err?.sqlMessage.includes('Cannot delete or update a parent row: a foreign key constraint fails')) {
-  //       // Сначала удаляем слова
-  //       sqlPool.pool.query(
-  //         `DELETE FROM words WHERE folder_id = ${folderId}`,
-  //         function(err, results, fields) {
-  //           if (res) {
-  //
-  //             // Затем удаляем папку
-  //             sqlPool.pool.query(
-  //               `DELETE FROM words_folders WHERE id = ${folderId}`,
-  //               function(err, results, fields) {
-  //                 if (res) {
-  //                   res.status(200).send(results);
-  //                 } else {
-  //                   res.status(400);
-  //                 }
-  //               }
-  //             );
-  //           } else {
-  //             res.status(400);
-  //           }
-  //         }
-  //       );
-  //     }
-  //     else {
-  //       res.status(200).send(results);
-  //     }
-  //   }
-  // );
+const renameFolderById = (req, res) => {
+  const { folderId, folderName } = req.body;
+  sqlPool.pool.query(
+    `UPDATE words_folders SET folder_name = '${folderName}' WHERE id = ${folderId}`,
+    function(err, results, fields) {
+      if (results) {
+        res.status(200).send(results);
+      }
+    }
+  );
 }
 
 module.exports = {
   getAllFolders,
   createNewFolder,
   deleteFolderById,
+  renameFolderById,
 }
