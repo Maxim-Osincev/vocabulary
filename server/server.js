@@ -8,8 +8,9 @@ app.use(express.json())
 app.use(cors())
 
 const foldersActions = require('./foldersWords/foldersWordsActions')
-app.get('/root-folders', foldersActions.getRootFolders)
-app.get('/folders', foldersActions.getFoldersByParentId)
+app.get('/folders', foldersActions.getAllFolders)
+app.post('/folders', foldersActions.createNewFolder)
+app.delete('/folders', foldersActions.deleteFolderById)
 
 // app.get('/words', wordsActions.getAllWords)
 // app.post('/words', wordsActions.addWord)
