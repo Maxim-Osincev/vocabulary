@@ -50,9 +50,23 @@ const renameFolderById = (req, res) => {
   );
 }
 
+const copyFolderById = (req, res) => {
+  const { folderId } = req.body;
+  sqlPool.pool.query(
+    `INSERT INTO words_folders (folder_name) SELECT folder_name FROM words_folders where id = ${folderId}`,
+    function(err, results, fields) {
+      if (results) {
+        req.body.newFolderId = results.insertId;
+        wordsActions.copyWordsByFolderId(req, res);
+      }
+    }
+  );
+}
+
 module.exports = {
   getAllFolders,
   createNewFolder,
   deleteFolderById,
   renameFolderById,
+  copyFolderById,
 }

@@ -10,6 +10,7 @@ app.use(cors())
 const foldersActions = require('./foldersWords/foldersWordsActions')
 app.get('/folders', foldersActions.getAllFolders)
 app.post('/folders', foldersActions.createNewFolder)
+app.post('/folders-copy', foldersActions.copyFolderById)
 app.delete('/folders', foldersActions.deleteFolderById)
 app.put('/folders', foldersActions.renameFolderById)
 

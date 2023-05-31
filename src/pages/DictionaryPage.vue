@@ -14,7 +14,7 @@
             :key="folder.id"
             clickable
             v-ripple
-            :active="selectedFolder === folder.folder_name"
+            :active="selectedFolder?.id === folder.id"
             @click="getFolderWords(folder)"
           >
             <q-menu
@@ -27,7 +27,7 @@
                 </q-item>
                 <q-separator/>
                 <q-item clickable v-close-popup>
-                  <q-item-section>Копировать</q-item-section>
+                  <q-item-section @click="copyFolder(folder)">Копировать</q-item-section>
                 </q-item>
                 <q-separator/>
                 <q-item clickable v-close-popup @click="confirmDeleting(folder)">
@@ -147,7 +147,7 @@ interface Word {
   updated_date: Date,
 }
 
-const selectedFolder = ref<string>('');
+const selectedFolder = ref<Folder>();
 
 const loadingFoldersList = ref<boolean>(false);
 
@@ -159,8 +159,9 @@ const getAllFolders = async () => {
 }
 
 const wordsList = ref<Word[]>([]);
-const getFolderWords = async ({ id, folder_name }) => {
-  selectedFolder.value = folder_name;
+const getFolderWords = async (folder) => {
+  const { id, folder_name } = folder;
+  selectedFolder.value = folder;
   wordsList.value = await axios.get('http://localhost:8000/words', { params: { folderId: id } }).then(res => res.data);
 }
 
@@ -220,6 +221,13 @@ const renameFolder = async () => {
     await getAllFolders();
     currentFolderToRename.value = {};
     folderName.value = '';
+  }
+}
+
+const copyFolder = async ({ id, folder_name }) => {
+  const data = await axios.post('http://localhost:8000/folders-copy', { folderId: id, folderName: folder_name }).then(res => res.data);
+  if (data) {
+    await getAllFolders();
   }
 }
 
