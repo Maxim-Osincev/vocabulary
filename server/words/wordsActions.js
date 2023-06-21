@@ -43,19 +43,24 @@ const copyWordsByFolderId = (req, res) => {
       }
     }
   );
-  // INSERT INTO `words` (`word`, `translate`, `example`, `folder_id`) VALUES (SELECT `word`, `translate`, `example`, `folder_id` FROM `words` where `folder_id` = 22)
-  // sqlPool.pool.query(
-  //   `INSERT INTO words (word, translate, example) SELECT * FROM words where folder_id = ${folderId} WHERE folder_id = ${folderId}`,
-  //   function(err, results, fields) {
-  //     if (results) {
-  //       wordsActions.copyWordsByFolderId(req, res);
-  //     }
-  //   }
-  // );
+}
+
+const createWordByFolderId = (req, res) => {
+  const { folderId, wordData } = req.body;
+  const { word, translate, example } = wordData;
+  sqlPool.pool.query(
+    `INSERT INTO words (word, translate, example, folder_id) VALUES ('${word}', '${translate}', '${example}', ${folderId})`,
+    function(err, results, fields) {
+      if (results) {
+        res.status(200).send(results);
+      }
+    }
+  );
 }
 
 module.exports = {
   getWordsByFolderId,
   deleteAllWordsInFolder,
   copyWordsByFolderId,
+  createWordByFolderId,
 }

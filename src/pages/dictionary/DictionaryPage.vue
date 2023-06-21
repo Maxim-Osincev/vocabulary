@@ -7,7 +7,7 @@
           size="2em"
         />
       </div>
-      <div v-else>
+      <div class="full-height" v-else>
         <q-list v-if="folders && folders.length" class="rounded-borders" dense>
           <q-item
             v-for="folder in folders"
@@ -52,45 +52,28 @@
       </div>
     </div>
     <div class="col relative-position">
-      <q-table
-        v-if="wordsList && wordsList.length"
-        :columns="wordsTableColumns"
-        :rows="wordsList"
-        row-key="name"
-        flat
-        class="absolute-full"
-      >
-        <template v-slot:header="props">
-          <q-tr :props="props">
-            <q-th
-              v-for="col in props.cols"
-              :key="col.name"
-              :props="props"
-            >
-              <div class="text-weight-bold text-body1 text-italic">{{ col.label }}</div>
-            </q-th>
-          </q-tr>
-        </template>
-      </q-table>
-      <div v-else class="text-center text-h6">Список пуст</div>
+      <WordsTable
+        :words-list="wordsList"
+        :folder-id="selectedFolder?.id"
+        @update-words-list="getFolderWords(selectedFolder)"
+      />
     </div>
   </div>
-  <q-dialog v-model="showEditingFolders">
-    <q-card class="full-width" style="max-width: 500px;">
-      <q-card-section>
-        <div class="text-h6">Создать</div>
-      </q-card-section>
-
-      <q-card-section class="q-pt-none">
-        <q-input v-model="folderName" label="Название папки" />
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat label="Отменить" v-close-popup />
-        <q-btn flat label="Сохранить" color="primary" @click="createNewFolder" v-close-popup />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+  <EditModal
+    v-model="showEditingFolders"
+    :label="'Название папки'"
+    :title="'Создать'"
+    :action="'create-new-folder'"
+    @create-new-folder="createNewFolder"
+  />
+<!--  <EditModal-->
+<!--    v-model="showEditingNameFolders"-->
+<!--    :label="'Название папки'"-->
+<!--    :title="'Переименовать'"-->
+<!--    :action="'rename-folder'"-->
+<!--    v-model:text="folderName"-->
+<!--    @rename-folder="renameFolder"-->
+<!--  />-->
   <q-dialog v-model="showEditingNameFolders">
     <q-card class="full-width" style="max-width: 500px;">
       <q-card-section>
@@ -107,23 +90,20 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <q-dialog v-model="confirmDeleteFolder" persistent>
-    <q-card>
-      <q-card-section class="row items-center">
-        <span class="q-ml-sm">При удалении папки будут также удалены все слова из нее. Вы уверены, что хотите сделать это?</span>
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat label="Отмена" v-close-popup />
-        <q-btn flat label="Подтвердить" color="primary" v-close-popup @click="deleteFolderById" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+  <ConfirmModal
+    v-model="confirmDeleteFolder"
+    :text="'При удалении папки будут также удалены все слова из нее. Вы уверены, что хотите сделать это?'"
+    :action="'delete-folder'"
+    @delete-folder="deleteFolderById"
+  />
 </template>
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
-import axios from 'axios';
+import { api } from 'boot/axios';
+import EditModal from '/src/components/modal/EditModal.vue';
+import ConfirmModal from 'components/modal/ConfirmModal.vue';
+import WordsTable from 'pages/dictionary/words/WordsTable.vue';
 
 interface Folder {
   id: number,
@@ -154,37 +134,24 @@ const loadingFoldersList = ref<boolean>(false);
 const folders = ref<Folder[]>([]);
 const getAllFolders = async () => {
   loadingFoldersList.value = true;
-  folders.value = await axios.get('http://localhost:8000/folders').then(res => res.data);
+  folders.value = await api.get('/folders').then(res => res.data);
   loadingFoldersList.value = false;
 }
 
 const wordsList = ref<Word[]>([]);
-const getFolderWords = async (folder) => {
-  const { id, folder_name } = folder;
+const getFolderWords = async (folder: Folder) => {
+  const { id } = folder;
   selectedFolder.value = folder;
-  wordsList.value = await axios.get('http://localhost:8000/words', { params: { folderId: id } }).then(res => res.data);
+  wordsList.value = await api.get('/words', { params: { folderId: id } }).then(res => res.data);
 }
-
-const wordsTableColumns = [
-  {
-    name: 'word',
-    label: 'Слово',
-    align: 'left',
-    field: row => row.word,
-    format: val => `${val}`,
-  },
-  { name: 'translate', align: 'left', label: 'Перевод', field: 'translate' },
-  { name: 'example', align: 'left', label: 'Пример', field: 'example' },
-]
 
 const showEditingFolders = ref<boolean>(false);
 const folderName = ref<string>('');
-const createNewFolder = async () => {
-  const { value } = folderName;
-  folderName.value = '';
-  const data = await axios.post('http://localhost:8000/folders', { folderName: value }).then(res => res.data);
+const createNewFolder = async (value: string) => {
+  const data = await api.post('/folders', { folderName: value }).then(res => res.data);
   if (data) {
     await getAllFolders();
+    showEditingFolders.value = false;
   }
 }
 
@@ -197,7 +164,7 @@ const confirmDeleting = (folder: Folder) => {
 
 const deleteFolderById = async () => {
   const { id } = currentFolderToDelete.value as Folder;
-  const data = await axios.delete('http://localhost:8000/folders', { params: { folderId: id } }).then(res => res.data);
+  const data = await api.delete('/folders', { params: { folderId: id } }).then(res => res.data);
   if (data) {
     await getAllFolders();
     wordsList.value = [];
@@ -214,18 +181,17 @@ const editingNameFolder = (folder: Folder) => {
   folderName.value = folder_name;
 }
 
-const renameFolder = async () => {
+const renameFolder = async (value: string) => {
   const { id } = currentFolderToRename.value as Folder;
-  const data = await axios.put('http://localhost:8000/folders', { folderId: id, folderName: folderName.value }).then(res => res.data);
+  const data = await api.put('/folders', { folderId: id, folderName: value }).then(res => res.data);
   if (data) {
     await getAllFolders();
     currentFolderToRename.value = {};
-    folderName.value = '';
   }
 }
 
 const copyFolder = async ({ id, folder_name }) => {
-  const data = await axios.post('http://localhost:8000/folders-copy', { folderId: id, folderName: folder_name }).then(res => res.data);
+  const data = await api.post('/folders-copy', { folderId: id, folderName: folder_name }).then(res => res.data);
   if (data) {
     await getAllFolders();
   }

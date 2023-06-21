@@ -20,6 +20,7 @@ app.put('/folders', foldersActions.renameFolderById)
 
 const wordsActions = require('./words/wordsActions')
 app.get('/words', wordsActions.getWordsByFolderId)
+app.post('/words', wordsActions.createWordByFolderId)
 
 
 app.listen(PORT, () => {

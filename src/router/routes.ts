@@ -12,7 +12,7 @@ const routes: RouteRecordRaw[] = [
           {
             path: '/dictionary',
             name: 'dictionary',
-            component: () => import('pages/DictionaryPage.vue')
+            component: () => import('pages/dictionary/DictionaryPage.vue')
           },
           {
             path: '/rules',
