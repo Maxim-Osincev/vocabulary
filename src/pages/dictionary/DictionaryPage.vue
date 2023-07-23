@@ -199,7 +199,6 @@ const copyFolder = async ({ id, folder_name }) => {
 
 onMounted(async () => {
   await getAllFolders();
-  console.log(folders.value);
 });
 
 </script>
