@@ -14,10 +14,6 @@ app.post('/folders-copy', foldersActions.copyFolderById)
 app.delete('/folders', foldersActions.deleteFolderById)
 app.put('/folders', foldersActions.renameFolderById)
 
-// app.get('/words', wordsActions.getAllWords)
-// app.post('/words', wordsActions.addWord)
-// app.delete('/words', wordsActions.deleteWord)
-
 const wordsActions = require('./words/wordsActions')
 app.get('/words', wordsActions.getWordsByFolderId)
 app.post('/words', wordsActions.createWordByFolderId)
