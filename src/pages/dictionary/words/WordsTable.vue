@@ -28,7 +28,7 @@
     >
       <q-list dense style="min-width: 100px">
         <q-item clickable v-close-popup>
-          <q-item-section @click="showModal = true">Добавить</q-item-section>
+          <q-item-section @click="showModal = true">Добавить слово</q-item-section>
         </q-item>
       </q-list>
     </q-menu>
@@ -90,6 +90,7 @@ const createNewWord = async () => {
   const data = await api.post('/words', { wordData: wordData.value, folderId: props.folderId }).then(res => res.data);
   if (data) {
     emit('update-words-list');
+    showModal.value = false;
     wordData.value.word = '';
     wordData.value.translate = '';
     wordData.value.example = '';

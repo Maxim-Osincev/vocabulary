@@ -39,13 +39,14 @@
           </q-item>
         </q-list>
         <div v-else class="q-pa-sm text-center">Список папок пуст</div>
+        <!-- Меню создания папки -->
         <q-menu
           touch-position
           context-menu
         >
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup>
-              <q-item-section @click="showEditingFolders = !showEditingFolders">Создать</q-item-section>
+              <q-item-section @click="showEditingFolders = !showEditingFolders">Создать папку</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -181,9 +182,9 @@ const editingNameFolder = (folder: Folder) => {
   folderName.value = folder_name;
 }
 
-const renameFolder = async (value: string) => {
+const renameFolder = async () => {
   const { id } = currentFolderToRename.value as Folder;
-  const data = await api.put('/folders', { folderId: id, folderName: value }).then(res => res.data);
+  const data = await api.put('/folders', { folderId: id, folderName: folderName.value }).then(res => res.data);
   if (data) {
     await getAllFolders();
     currentFolderToRename.value = {};
