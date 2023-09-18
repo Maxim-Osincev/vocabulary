@@ -1,7 +1,7 @@
 {
   "name": "dictionary",
   "version": "0.0.1",
-  "description": "A Quasar Project",
+  "description": "Dictionary for English words and rules",
   "productName": "Dictionary",
   "author": "osintsev_maksim <osince@list.ru>",
   "private": true,
