@@ -18,6 +18,11 @@ const wordsActions = require('./words/wordsActions')
 app.get('/words', wordsActions.getWordsByFolderId)
 app.post('/words', wordsActions.createWordByFolderId)
 
+const rulesActions = require('./rules/rulesActions')
+app.get('/rules', rulesActions.getAllRules)
+app.post('/rules', rulesActions.createNewRule)
+app.delete('/rules', rulesActions.deleteRuleById)
+
 
 app.listen(PORT, () => {
     console.log(`Example app listening on port ${PORT}`)

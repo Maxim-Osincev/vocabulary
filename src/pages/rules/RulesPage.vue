@@ -1,21 +1,45 @@
 <template>
-  <q-list class="rounded-borders">
-    <q-expansion-item
-      v-for="rule in rulesList"
-      :key="rule.id"
-      class="q-mb-md"
-      expand-separator
-      icon="rule"
-      :label="rule.ruleName"
-      :author="rule.author"
-    >
-      <q-card>
-        <q-card-section>
-          {{ rule.description }}
-        </q-card-section>
-      </q-card>
-    </q-expansion-item>
-  </q-list>
+  <div v-if="loading">
+    1
+  </div>
+  <div v-else>
+    <q-list v-if="rulesList.length" class="rounded-borders">
+      <q-expansion-item
+        v-for="rule in rulesList"
+        :key="rule.id"
+        class="q-mb-md"
+        expand-separator
+        icon="rule"
+        :label="rule.title"
+        group="rules"
+        switch-toggle-side
+      >
+        <template #header>
+          <q-item-section>{{ rule.title }}</q-item-section>
+          <q-item-section side>
+            <q-icon name="more_vert" v-ripple>
+              <q-menu>
+                <q-list style="min-width: 150px">
+                  <q-item clickable v-close-popup>
+                    <q-item-section>Изменить</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup>
+                    <q-item-section @click="deleteRuleById(rule.id)">Удалить</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-icon>
+          </q-item-section>
+        </template>
+        <q-card>
+          <q-card-section>
+            {{ rule.description }}
+          </q-card-section>
+        </q-card>
+      </q-expansion-item>
+    </q-list>
+    <div v-else class="text-center text-h6">Список пуст</div>
+  </div>
 
   <q-btn
     class="absolute-bottom-right"
@@ -27,10 +51,13 @@
     @click="editingRules = true"
   />
   <q-dialog v-model="editingRules">
-    <q-card class="column" style="min-width: 40vw; min-height: 30vh;">
+    <q-card class="column" style="min-width: 40vw;">
       <q-card-section>
-        <q-input v-model="editingRule.ruleName" label="Название" />
-        <q-input v-model="editingRule.description" label="Описание" autogrow />
+        <div class="text-h6">Создать</div>
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <q-input v-model="editingRule.ruleTitle" label="Название" />
+        <q-input v-model="editingRule.ruleDescription" label="Описание" autogrow />
       </q-card-section>
       <q-space />
       <q-card-actions align="right">
@@ -41,50 +68,64 @@
   </q-dialog>
 </template>
 
-<script lang="ts" setup>
-import {reactive, ref} from 'vue';
+<script>
+import {api} from "../../boot/axios";
 
-const rulesList = reactive<object[]>([
-  {
-    id: 1,
-    ruleName: 'Правило №1',
-    description: 'Описание правила №1',
-    author: 'Maksim Osintsev',
+export default{
+  data () {
+    return {
+      rulesList: [],
+      editingRules: false,
+      editingRule: {
+        ruleTitle: '',
+        ruleDescription: '',
+      },
+      loading: false,
+    }
   },
-  {
-    id: 2,
-    ruleName: 'Правило №2',
-    description: 'Описание правила №2',
-    author: 'Maksim Osintsev',
+  mounted () {
+    this.loading = true;
+    this.load();
   },
-]);
+  methods: {
+    async load () {
+      await this.getAllRules();
+      this.loading = false;
+    },
+    async getAllRules () {
+      await this.$api.get('/rules').then(res => {
+        this.rulesList = res.data;
+      });
+    },
+    clearFields () {
+      this.editingRule.ruleTitle = '';
+      this.editingRule.ruleDescription = '';
+    },
+    async addNewRule () {
+      await this.$api.post('/rules', this.editingRule);
+      this.clearFields();
+      await this.getAllRules();
+    },
+    async deleteRuleById (id) {
+      this.$q.dialog({
+        title: 'Подтверждение',
+        message: 'Вы уверены, что хотите удалить правило?',
+        persistent: true,
+        ok: {
+          label: 'Подтвердить',
+        },
+        cancel: {
+          label: 'Отмена',
 
-interface Rule {
-  id?: number,
-  ruleName: string,
-  description: string,
-  author?: string,
-}
-
-const editingRules = ref<boolean>(false);
-const editingRule = reactive<Rule>({
-  ruleName: '',
-  description: '',
-});
-
-const clearFields = () => {
-  editingRule.ruleName = '';
-  editingRule.description = '';
-};
-
-const addNewRule = () => {
-  rulesList.push({
-    id: rulesList.length + 1,
-    author: 'Test user admin',
-    ...editingRule
-  });
-
-  clearFields();
+        },
+      }).onOk(async () => {
+        const data = await api.delete('/rules', { params: { ruleId: id } }).then(res => res.data);
+        if (data) {
+          await this.getAllRules();
+        }
+      });
+    },
+  },
 };
 </script>
 
